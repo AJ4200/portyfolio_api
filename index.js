@@ -3,16 +3,22 @@ require('dotenv').config();
 const express = require('express');
 const bodyParser = require('body-parser');
 const { Pool } = require('pg');
+const cors = require('cors');
 
 const pool = new Pool({
-    connectionString: process.env.DATABASE_URL,
-    ssl: {
-      rejectUnauthorized: false
-    }
-  });
+  connectionString: process.env.DATABASE_URL,
+  ssl: {
+    rejectUnauthorized: false
+  }
+});
 
 const app = express();
 app.use(bodyParser.json());
+
+// Enable CORS with no restrictions
+app.use(cors({
+  origin: '*'
+}));
 
 // Input validation middleware
 function validateInput(req, res, next) {
