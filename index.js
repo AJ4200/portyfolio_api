@@ -20,6 +20,13 @@ app.use(cors({
   origin: '*'
 }));
 
+function isValidEmail(email) {
+    // Use a regular expression to check the email format
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailRegex.test(email);
+  }
+  
+
 // Input validation middleware
 function validateInput(req, res, next) {
   const { email } = req.body;
