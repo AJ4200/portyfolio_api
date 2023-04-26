@@ -1,0 +1,2 @@
+class Waitinguser < ApplicationRecord
+end
