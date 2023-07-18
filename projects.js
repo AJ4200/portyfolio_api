@@ -6,10 +6,9 @@ const router = express.Router();
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
   ssl: {
-    rejectUnauthorized: false 
+    rejectUnauthorized: false
   }
 });
-// Get all projects
 // Get all projects
 router.get('/', async (req, res) => {
   try {
@@ -29,7 +28,7 @@ router.get('/', async (req, res) => {
       GROUP BY 
         projects.id
     `);
-     const projects = rows.map((row) => {
+    const projects = rows.map((row) => {
       return {
         title: row.title,
         imgSrc: row.imgSrc,
@@ -40,28 +39,52 @@ router.get('/', async (req, res) => {
         modalContent: row.modalContent,
       };
     });
-     res.json(projects);
+    res.json(projects);
   } catch (error) {
     console.error('Error retrieving projects:', error);
     res.status(500).json({ error: 'Internal server error' });
   }
 });
-// Get a specific project by ID
 router.get('/:id', async (req, res) => {
   const { id } = req.params;
   try {
-    const { rows } = await pool.query('SELECT * FROM projects WHERE id = $1', [id]);
+    const { rows } = await pool.query(`
+      SELECT 
+        projects.title,
+        projects.imgsrc AS "imgSrc",
+        projects.code,
+        projects.projectlink AS "projectLink",
+        array_agg(technologies.tech) AS tech,
+        projects.description,
+        projects.modalcontent AS "modalContent"
+      FROM 
+        projects
+      LEFT JOIN 
+        technologies ON projects.id = technologies.project_id
+      WHERE 
+        projects.id = $1
+      GROUP BY 
+        projects.id
+    `, [id]);
     if (rows.length === 0) {
       res.status(404).json({ error: 'Project not found' });
     } else {
-      res.json(rows[0]);
+      const project = {
+        title: rows[0].title,
+        imgSrc: rows[0].imgSrc,
+        code: rows[0].code,
+        projectLink: rows[0].projectLink,
+        tech: rows[0].tech,
+        description: rows[0].description,
+        modalContent: rows[0].modalContent,
+      };
+      res.json(project);
     }
   } catch (error) {
     console.error('Error retrieving project:', error);
     res.status(500).json({ error: 'Internal server error' });
   }
 });
-// Create a new project
 router.post('/', async (req, res) => {
   const { title, imgSrc, code, projectLink, description, modalContent } = req.body;
   try {
@@ -69,7 +92,16 @@ router.post('/', async (req, res) => {
       'INSERT INTO projects (title, imgSrc, code, projectLink, description, modalContent) VALUES ($1, $2, $3, $4, $5, $6) RETURNING *',
       [title, imgSrc, code, projectLink, description, modalContent]
     );
-    res.status(201).json(rows[0]);
+    const project = {
+      title: rows[0].title,
+      imgSrc: rows[0].imgSrc,
+      code: rows[0].code,
+      projectLink: rows[0].projectLink,
+      tech: [],
+      description: rows[0].description,
+      modalContent: rows[0].modalContent,
+    };
+    res.status(201).json(project);
   } catch (error) {
     console.error('Error creating project:', error);
     res.status(500).json({ error: 'Internal server error' });
@@ -87,7 +119,16 @@ router.put('/:id', async (req, res) => {
     if (rows.length === 0) {
       res.status(404).json({ error: 'Project not found' });
     } else {
-      res.json(rows[0]);
+      const project = {
+        title: rows[0].title,
+        imgSrc: rows[0].imgSrc,
+        code: rows[0].code,
+        projectLink: rows[0].projectLink,
+        tech: [],
+        description: rows[0].description,
+        modalContent: rows[0].modalContent,
+      };
+      res.json(project);
     }
   } catch (error) {
     console.error('Error updating project:', error);
