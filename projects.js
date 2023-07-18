@@ -10,11 +10,38 @@ const pool = new Pool({
   }
 });
 // Get all projects
+// Get all projects
 router.get('/', async (req, res) => {
   try {
-    const { rows } = await pool.query('SELECT * FROM projects');
-    res.json(rows);
-  } catch (error) {d
+    const { rows } = await pool.query(`
+      SELECT 
+        projects.title,
+        projects.imgsrc AS "imgSrc",
+        projects.code,
+        projects.projectlink AS "projectLink",
+        array_agg(technologies.tech) AS tech,
+        projects.description,
+        projects.modalcontent AS "modalContent"
+      FROM 
+        projects
+      LEFT JOIN 
+        technologies ON projects.id = technologies.project_id
+      GROUP BY 
+        projects.id
+    `);
+     const projects = rows.map((row) => {
+      return {
+        title: row.title,
+        imgSrc: row.imgSrc,
+        code: row.code,
+        projectLink: row.projectLink,
+        tech: row.tech,
+        description: row.description,
+        modalContent: row.modalContent,
+      };
+    });
+     res.json(projects);
+  } catch (error) {
     console.error('Error retrieving projects:', error);
     res.status(500).json({ error: 'Internal server error' });
   }
