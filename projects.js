@@ -4,12 +4,15 @@ const { Pool } = require('pg');
 const router = express.Router();
 
 const pool = new Pool({
-  connectionString: process.env.DATABASE_URL
+  connectionString: process.env.DATABASE_URL,
+  ssl: {
+    rejectUnauthorized: false 
+  }
 });
 // Get all projects
-router.get('/', async (_req, res) => {
+router.get('/', async (req, res) => {
   try {
-    const { rows } = await pool.query('SELECT * FROM public.projects');
+    const { rows } = await pool.query('SELECT * FROM projects');
     res.json(rows);
   } catch (error) {d
     console.error('Error retrieving projects:', error);
@@ -20,7 +23,7 @@ router.get('/', async (_req, res) => {
 router.get('/:id', async (req, res) => {
   const { id } = req.params;
   try {
-    const { rows } = await pool.query('SELECT * FROM public.projects WHERE id = $1', [id]);
+    const { rows } = await pool.query('SELECT * FROM projects WHERE id = $1', [id]);
     if (rows.length === 0) {
       res.status(404).json({ error: 'Project not found' });
     } else {
